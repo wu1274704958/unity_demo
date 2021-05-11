@@ -65,9 +65,9 @@
 				float3 pos2 = mul(unity_ObjectToWorld ,float4(patch[2].PosL,1.0));
 				
 
-                pt.EdgeTess[0] = max(step(distance(pos0,_HitPos.xyz),0.8) * 32,1);
-                pt.EdgeTess[1] = max(step(distance(pos1,_HitPos.xyz),0.8) * 32,1);
-                pt.EdgeTess[2] = max(step(distance(pos2,_HitPos.xyz),0.8) * 32,1);
+                pt.EdgeTess[0] = max(step(distance(pos0,_HitPos.xyz),0.15) * 32,1);
+                pt.EdgeTess[1] = max(step(distance(pos1,_HitPos.xyz),0.15) * 32,1);
+                pt.EdgeTess[2] = max(step(distance(pos2,_HitPos.xyz),0.15) * 32,1);
 				pt.EdgeTess[0] = max(max(pt.EdgeTess[1],pt.EdgeTess[2]),pt.EdgeTess[0]);
 				pt.EdgeTess[1] = pt.EdgeTess[2] = pt.EdgeTess[0];
                 pt.InsideTess = (pt.EdgeTess[0] + pt.EdgeTess[1] +pt.EdgeTess[2])/3;
@@ -109,15 +109,15 @@
                 float3 p=triangles[0].PosL*baryCoords.x+triangles[1].PosL*baryCoords.y+triangles[2].PosL*baryCoords.z;
 
 				float2 uv = triangles[0].uv0 * baryCoords.x + triangles[1].uv0 * baryCoords.y + triangles[2].uv0 * baryCoords.z;
-
+				float3 normal = triangles[0].normal0 * baryCoords.x + triangles[1].normal0 * baryCoords.y + triangles[2].normal0 * baryCoords.z;
 				//uv.x = lerp(uv.x,1-uv.x,step(0.5,uv.x));
 				//uv.y = lerp(uv.y,1-uv.y,step(0.5,uv.y));
 
 				//p += triangles[0].normal0 * sqrt( length(uv)) * -0.03;
 
-				float3 pos = mul(unity_ObjectToWorld ,float4(p,1.0));
+				float3 pos = mul(unity_ObjectToWorld ,float4(p,1));
 				float dist = distance(pos,_HitPos.xyz);
-				p += step(dist,0.5) * (0.5 - dist) * triangles[0].normal0 ;
+				p -= step(dist,0.1) * (0.1 - dist) * normal;
 
                 dout.PosH=UnityObjectToClipPos(p.xyz);
 				dout.color = half4(uv,0,1);  
