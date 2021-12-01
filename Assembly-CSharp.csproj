@@ -2,8 +2,6 @@
 <Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
     <LangVersion>latest</LangVersion>
-    <CscToolPath>C:\Program1\Unity\Editor\Data\Tools\RoslynScripts</CscToolPath>
-    <CscToolExe>unity_csc.bat</CscToolExe>
   </PropertyGroup>
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
@@ -49,10 +47,14 @@
   <PropertyGroup>
     <ProjectTypeGuids>{E097FAD1-6243-4DAD-9C02-E9B9EFC3FFC1};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
     <UnityProjectGenerator>Unity/VSTU</UnityProjectGenerator>
+    <UnityProjectGeneratorVersion>4.11.4.0</UnityProjectGeneratorVersion>
     <UnityProjectType>Game:1</UnityProjectType>
     <UnityBuildTarget>StandaloneWindows64:19</UnityBuildTarget>
     <UnityVersion>2019.4.10f1</UnityVersion>
   </PropertyGroup>
+  <ItemGroup>
+    <Analyzer Include="C:\Program Files (x86)\Microsoft Visual Studio Tools for Unity\16.0\Analyzers\Microsoft.Unity.Analyzers.dll" />
+  </ItemGroup>
   <ItemGroup>
     <Reference Include="UnityEngine">
       <HintPath>C:\Program1\Unity\Editor\Data\Managed/UnityEngine/UnityEngine.dll</HintPath>
@@ -63,12 +65,20 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Assets\ClickTer.cs" />
+    <Compile Include="Assets\scripts\CAM.cs" />
     <Compile Include="Assets\scripts\First.cs" />
+    <Compile Include="Assets\scripts\FlyTo.cs" />
+    <Compile Include="Assets\scripts\GStateMachine.cs" />
+    <Compile Include="Assets\scripts\GuideGoConfig.cs" />
+    <Compile Include="Assets\scripts\GuideGoConfigUnit.cs" />
+    <Compile Include="Assets\scripts\PostProcess.cs" />
     <Compile Include="Assets\scripts\StepGenerator.cs" />
     <Compile Include="Assets\scripts\UiUtils\WheelUI.cs" />
     <Compile Include="Assets\scripts\Utils\TimeUtils.cs" />
     <Compile Include="Assets\scripts\Utils\Utils.cs" />
+    <None Include="Assets\shader\immerse.shader" />
     <None Include="Assets\shader\testTessellation.shader" />
+    <None Include="Assets\shader\EdgeFade\EdgeFadeShader.shader" />
     <None Include="Assets\shader\First.shader" />
     <Reference Include="UnityEngine">
       <HintPath>C:/Program1/Unity/Editor/Data/Managed/UnityEngine/UnityEngine.dll</HintPath>
@@ -253,6 +263,9 @@
     <Reference Include="UnityEditor">
       <HintPath>C:/Program1/Unity/Editor/Data/Managed/UnityEditor.dll</HintPath>
     </Reference>
+    <Reference Include="DOTween">
+      <HintPath>D:/repo/unity_demo/Assets/Plugins/Demigiant/DOTween/DOTween.dll</HintPath>
+    </Reference>
     <Reference Include="ILRuntim.Mono.Cecil">
       <HintPath>D:/repo/unity_demo/Library/PackageCache/com.ourpalm.ilruntime@1.6.6/Plugins/ILRuntim.Mono.Cecil.dll</HintPath>
     </Reference>
@@ -261,9 +274,6 @@
     </Reference>
     <Reference Include="ILRuntime.Mono.Cecil.Pdb">
       <HintPath>D:/repo/unity_demo/Library/PackageCache/com.ourpalm.ilruntime@1.6.6/Plugins/ILRuntime.Mono.Cecil.Pdb.dll</HintPath>
-    </Reference>
-    <Reference Include="DOTween">
-      <HintPath>D:/repo/unity_demo/Assets/Plugins/Demigiant/DOTween/DOTween.dll</HintPath>
     </Reference>
     <Reference Include="mscorlib">
       <HintPath>C:/Program1/Unity/Editor/Data/MonoBleedingEdge/lib/mono/4.7.1-api/mscorlib.dll</HintPath>
