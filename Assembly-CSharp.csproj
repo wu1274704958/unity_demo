@@ -65,7 +65,19 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Assets\ClickTer.cs" />
+    <Compile Include="Assets\External\LitJson\IJsonWrapper.cs" />
+    <Compile Include="Assets\External\LitJson\JsonData.cs" />
+    <Compile Include="Assets\External\LitJson\JsonException.cs" />
+    <Compile Include="Assets\External\LitJson\JsonMapper.cs" />
+    <Compile Include="Assets\External\LitJson\JsonMockWrapper.cs" />
+    <Compile Include="Assets\External\LitJson\JsonReader.cs" />
+    <Compile Include="Assets\External\LitJson\JsonWriter.cs" />
+    <Compile Include="Assets\External\LitJson\Lexer.cs" />
+    <Compile Include="Assets\External\LitJson\Netstandard15Polyfill.cs" />
+    <Compile Include="Assets\External\LitJson\ParserToken.cs" />
+    <Compile Include="Assets\Tab\TabUtil.cs" />
     <Compile Include="Assets\scripts\CAM.cs" />
+    <Compile Include="Assets\scripts\Comm.cs" />
     <Compile Include="Assets\scripts\First.cs" />
     <Compile Include="Assets\scripts\FlyTo.cs" />
     <Compile Include="Assets\scripts\GStateMachine.cs" />

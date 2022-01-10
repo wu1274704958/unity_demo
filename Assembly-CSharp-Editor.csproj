@@ -65,7 +65,10 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Assets\Editor\Build.cs" />
+    <Compile Include="Assets\Editor\GenCodeEditor.cs" />
     <Compile Include="Assets\Editor\GuideGoConfigEditor.cs" />
+    <Compile Include="Assets\Editor\StatisticalDepend.cs" />
+    <Compile Include="Assets\Editor\Utils\TabUtilEditor.cs" />
     <Compile Include="Assets\Editor\WheelUIEditor.cs" />
     <Reference Include="UnityEngine">
       <HintPath>C:/Program1/Unity/Editor/Data/Managed/UnityEngine/UnityEngine.dll</HintPath>
