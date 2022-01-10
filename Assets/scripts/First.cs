@@ -35,10 +35,12 @@ public class First : MonoBehaviour
         IList ls = l;
 
 
-        foreach(var d in ls)
+        foreach (var d in ls)
         {
             Debug.Log("asdas " + (d as GetId).getId().ToString());
         }
+
+        AnyArray a = new AnyArray("[i:123;  l:78;s:  哈哈哈 ;vec2 : 123,67;]");
     }
 
     // Update is called once per frame

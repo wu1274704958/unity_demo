@@ -68,6 +68,7 @@
     <Compile Include="Assets\Editor\GenCodeEditor.cs" />
     <Compile Include="Assets\Editor\GuideGoConfigEditor.cs" />
     <Compile Include="Assets\Editor\StatisticalDepend.cs" />
+    <Compile Include="Assets\Editor\Utils\DataCarrierEditor.cs" />
     <Compile Include="Assets\Editor\Utils\TabUtilEditor.cs" />
     <Compile Include="Assets\Editor\WheelUIEditor.cs" />
     <Reference Include="UnityEngine">

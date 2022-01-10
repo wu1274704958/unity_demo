@@ -86,6 +86,8 @@
     <Compile Include="Assets\scripts\PostProcess.cs" />
     <Compile Include="Assets\scripts\StepGenerator.cs" />
     <Compile Include="Assets\scripts\UiUtils\WheelUI.cs" />
+    <Compile Include="Assets\scripts\Utils\DataCarrier.cs" />
+    <Compile Include="Assets\scripts\Utils\DictionaryExtensions.cs" />
     <Compile Include="Assets\scripts\Utils\TimeUtils.cs" />
     <Compile Include="Assets\scripts\Utils\Utils.cs" />
     <None Include="Assets\shader\immerse.shader" />

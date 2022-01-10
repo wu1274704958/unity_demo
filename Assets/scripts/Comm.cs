@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 using UnityEngine;
 
 public class Wrap<T>
@@ -548,5 +547,361 @@ public class SceneViewMgrGroup : SceneViewMgrInterface
     }
 }
 
+public class ColliderClick
+{
+    protected int layerMask;
+    protected float VaildDist = 100.0f;
+    protected float sqrMouseMoveVaildDist = 2.0f;
+    protected Vector2 downPos;
+    protected HashSet<Collider> colliders = new HashSet<Collider>();
+    public Action<Collider> OnClick;
+    protected Camera cam;
+    public Camera camera { set
+        {
+            cam = value;
+        } 
+    }
 
+    public ColliderClick(int layerMask, float VaildDist = 100.0f,Camera cam = null)
+    {
+        this.layerMask = layerMask;
+        this.VaildDist = VaildDist;
+        this.cam = cam;
+    }
 
+    public bool Add(Collider c)
+    {
+        if (colliders.Contains(c)) return false;
+        colliders.Add(c);
+        return true;
+    }
+
+    public void Remove(Collider c)
+    {
+        colliders.Remove(c);
+        return;
+    }
+    protected void Clicked(Vector3 pos)
+    {
+        //if (cam == null) cam = CameraMgr.Instance.GetCamera(ECamType.MainCam);
+        if (cam == null) return;
+        var ray = cam.ScreenPointToRay(pos);
+        RaycastHit[] res = Physics.RaycastAll(ray, VaildDist, layerMask);
+        float dist = float.MaxValue;
+        Collider coll = null;
+        foreach (var it in res)
+        {
+            if (colliders.Contains(it.collider) && it.distance < dist)
+            {
+                coll = it.collider;
+                dist = it.distance;
+            }
+        }
+        if (coll != null)
+            OnClick?.Invoke(coll);
+    }
+
+    public void update()
+    {
+#if  !UNITY_EDITOR
+        if (Input.touchCount > 1 || Input.touchCount <= 0) return;
+        
+        var touch = Input.GetTouch(0);
+        if (touch.phase == TouchPhase.Stationary)
+        {
+            Clicked(touch.position);
+        }
+#else
+        if (Input.GetMouseButtonDown(0))
+        {
+            downPos = Input.mousePosition;
+            //Debug.LogWarning(" " + downPos);
+        }
+
+        if (Input.GetMouseButtonUp(0))
+        {
+            Vector2 upPos = Input.mousePosition;
+            //Debug.LogWarning(upPos + " " + downPos +"  " + (upPos - downPos).sqrMagnitude);
+            if ((upPos - downPos).sqrMagnitude > sqrMouseMoveVaildDist) return;
+            Clicked(upPos);
+        }
+#endif
+    }
+
+    internal void Clear()
+    {
+        colliders.Clear();
+    }
+}
+
+public static class Serialize
+{
+    public static T Deserialize<T>(string s)
+    {
+        var o = Deserialize(s, typeof(T));
+        if (o == null) return default(T);
+        return (T)o;
+    }
+    public static object Deserialize(string s, System.Type t)
+    {
+        if (t == typeof(string))
+        {
+            return s;
+        }
+        if (t == typeof(int))
+        {
+            if (int.TryParse(s, out var v))
+                return v;
+        }
+        if (t == typeof(long))
+        {
+            if (long.TryParse(s, out var v))
+                return v;
+        }
+        if (t == typeof(float))
+        {
+            if (float.TryParse(s, out var v))
+                return v;
+        }
+        if (t == typeof(double))
+        {
+            if (double.TryParse(s, out var v))
+                return v;
+        }
+        if (t == typeof(Vector2))
+        {
+            string[] arr = s.Split(',');
+            if (arr.Length >= 2)
+            {
+                Vector2 v = new Vector2(Deserialize<float>(arr[0]), Deserialize<float>(arr[1]));
+                return v;
+            }
+        }
+        if (t == typeof(Vector3))
+        {
+            string[] arr = s.Split(',');
+            if (arr.Length >= 3)
+            {
+                Vector3 v = new Vector3(Deserialize<float>(arr[0]), Deserialize<float>(arr[1]), Deserialize<float>(arr[2]));
+                return v;
+            }
+        }
+        if (t == typeof(Vector4))
+        {
+            string[] arr = s.Split(',');
+            if (arr.Length >= 4)
+            {
+                Vector4 v = new Vector4(Deserialize<float>(arr[0]), Deserialize<float>(arr[1]), Deserialize<float>(arr[2]), Deserialize<float>(arr[3]));
+                return v;
+            }
+        }
+        if (t == typeof(AnyArray))
+        {
+            try
+            {
+                AnyArray array = new AnyArray(s);
+                return array;
+            }
+            catch (Exception e) { }
+        }
+        return null;
+    }
+
+}
+
+public static class AnyArrayTyMap
+{
+    public static readonly Dictionary<string, System.Type> TypeMap = new KeyValuePair<string, System.Type>[]{
+        new KeyValuePair<string, System.Type>("i",typeof(int)),
+        new KeyValuePair<string, System.Type>("l",typeof(long)),
+        new KeyValuePair<string, System.Type>("f",typeof(float)),
+        new KeyValuePair<string, System.Type>("lf",typeof(double)),
+        new KeyValuePair<string, System.Type>("s",typeof(string)),
+        new KeyValuePair<string, System.Type>("vec2",typeof(Vector2)),
+        new KeyValuePair<string, System.Type>("vec3",typeof(Vector3)),
+        new KeyValuePair<string, System.Type>("vec4",typeof(Vector4))
+    }.ToDictionary();
+}
+
+public class AnyArray
+{
+    protected List<object> objs;
+    protected List<System.Type> tyArr;
+    
+    public AnyArray(string str)
+    {
+        if(parse(str,out var objs,out var tys))
+        {
+            this.objs = objs;
+            this.tyArr = tys;
+        }
+        else
+        {
+            throw new Exception("Parse AnyArray Failed!!!");
+        }
+    }
+
+    public bool good_idx(int idx)
+    {
+        return idx >= 0 && idx < objs.Count;
+    }
+    public bool TypeEq<T>(int idx)
+    {
+        if(good_idx(idx))
+        {
+            return typeof(T) == tyArr[idx];
+        }
+        return false;
+    }
+
+    public T Get<T>(int idx)
+    {
+        if (TypeEq<T>(idx))
+        {
+            return (T)objs[idx];
+        }
+        return default(T);
+    }
+
+    public bool TryGet<T>(int idx,out T v)
+    {
+        v = default(T);
+        if (TypeEq<T>(idx))
+        {
+            v = (T)objs[idx];
+            return true;
+        }
+        return false;
+    }
+
+    public object[] GetValues()
+    {
+        return objs.ToArray();
+    }
+
+    public bool parse(string str,out List<object> objs,out List<System.Type> tys)
+    {
+        var cs = str.Trim().ToCharArray();
+        int step = 0;
+        System.Type currTy = null;
+        objs = new List<object>();
+        tys = new List<Type>();
+        for(int i = 0;i < cs.Length;++i)
+        {
+            var it = cs[i];
+            if (step == 0 && it == '[')
+            {
+                ++step;continue;
+            }
+            if(step == 1 && it == ']')
+            {
+                if (i + 1 == cs.Length)
+                {
+                    step = 100;break;
+                }
+            }
+            if(step == 1)
+            {
+                if (GetType(cs, i, out var ty, out var new_it))
+                {
+                    i = new_it; currTy = ty; step += 1;
+                    continue;
+                }
+                else return false;
+            }
+            if (step == 2)
+            {
+                if (GetVal(cs, i, currTy, out var obj, out var nit))
+                {
+                    i = nit; step = 1;
+                    objs.Add(obj);
+                    tys.Add(currTy);
+                    if (cs[i] == ']')
+                    {
+                        step = 100;
+                        break;
+                    }
+                    else continue;
+                }
+                else return false;
+            }
+        }
+        return step == 100;
+    }
+
+    private bool GetType(char[] arr,int it,out System.Type ty,out int new_it)
+    {
+        ty = null;new_it = it;
+        var step = 0;
+        StringBuilder sb = new StringBuilder();
+        for (int i = it; i < arr.Length; ++i)
+        {
+            var c = arr[i];
+            if (step == 0)
+            {
+                if (c != ' ')
+                {
+                    sb.Append(c);
+                    step += 1;
+                }
+                continue;
+            }
+            if(step == 1)
+            {
+                if (c != ':')
+                    sb.Append(c);
+                else
+                {
+                    step += 1;
+                    new_it = i;
+                    ty = GetTypeByTag(sb.ToString().TrimEnd());
+                    break;
+                }
+            }
+        }
+        return step == 2 && ty != null;
+    }
+
+    private bool GetVal(char[] arr, int it,System.Type ty, out object val, out int new_it)
+    {
+        val = null; new_it = it;
+        var step = 0;
+        StringBuilder sb = new StringBuilder();
+        for (int i = it; i < arr.Length; ++i)
+        {
+            var c = arr[i];
+            if (step == 0)
+            {
+                if (c != ' ')
+                {
+                    sb.Append(c);
+                    step += 1;
+                }
+                continue;
+            }
+            if (step == 1)
+            {
+                if (c != ';' && c != ']')
+                    sb.Append(c);
+                else
+                {
+                    step += 1;
+                    new_it = i;
+                    val = Serialize.Deserialize(sb.ToString().TrimEnd(),ty );
+                    break;
+                }
+            }
+        }
+        return step == 2 && val != null;
+    }
+
+    private System.Type GetTypeByTag(string res)
+    {
+        if(AnyArrayTyMap.TypeMap.TryGetValue(res,out var s))
+        {
+            return s;
+        }
+        return null;
+    }
+
+}
