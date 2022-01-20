@@ -1,9 +1,44 @@
 using UnityEngine;
 using UnityEditor;
 using Assets.Editor;
+using libcore;
 using System.Text;
 using System.Collections.Generic;
 using UnityEngine.UI;
+
+public class GenCodeCxt
+{
+    public string tag = "IT";
+    public string HEAD;
+    public string HEAD_ARR;
+    public string HEAD_ARREX;
+    public Dictionary<string, (string, System.Type)> dic = new Dictionary<string, (string, System.Type)>();
+    public Dictionary<string, (string, System.Type, int)> arrDic = new Dictionary<string, (string, System.Type, int)>();
+    public Dictionary<string, (List<string>, System.Type)> arrExDic = new Dictionary<string, (List<string>, System.Type)>();
+
+    public GenCodeCxt(string tag)
+    {
+        this.tag = tag;
+        HEAD = string.Format("{0}_",tag);
+        HEAD_ARR = string.Format("{0}A_", tag);
+        HEAD_ARREX = string.Format("{0}@",tag);
+    }
+    public bool ParseArrEx(string n,out string name,out int idx)
+    {
+        name = null;
+        idx = -1;
+        if(n.StartsWith(HEAD_ARREX))
+        {
+            var tail = n.Substring(HEAD_ARREX.Length);
+            string[] arr = tail.Split('_');
+            if (arr.Length != 2) return false;
+            if (!int.TryParse(arr[0], out idx)) return false;
+            name = arr[1];
+            return true;
+        }
+        return false;
+    }
+}
 
 public class GenCodeEditor
 {
@@ -26,9 +61,8 @@ public class GenCodeEditor
 
     public static void GenerateSubViewBindReal(StringBuilder res,GameObject o)
     {
-        Dictionary<string, (string, System.Type)> dic = new Dictionary<string, (string, System.Type)>();
-        Dictionary<string, (string, System.Type, int)> arrDic = new Dictionary<string, (string, System.Type, int)>();
-        FindAutoItemChildlern(o as GameObject, ref dic, ref arrDic, "", true, "SV_", "SVA_");
+        GenCodeCxt cxt = new GenCodeCxt("SV");
+        FindAutoItemChildlern(o as GameObject, ref cxt, "", true);
 
         string name = o.name;
 
@@ -36,7 +70,7 @@ public class GenCodeEditor
 public class {0}SubViewUI : SubViewUI
 {{
 ", name));
-        AppendMembers(res, dic, arrDic);
+        AppendMembers(res, cxt);
         res.Append(string.Format(@"
 public {0}SubViewUI()
 {{
@@ -46,7 +80,7 @@ public override void init(Transform root)
 {{
     base.init(root);
 ", name));
-        AppendFindMembers(res, dic, arrDic);
+        AppendFindMembers(res, cxt);
         res.Append(@"}
 }");
     }
@@ -95,26 +129,30 @@ public class {0}SubViewMgr : SubViewMgr<{0}SubViewUI>
         CopyTool.Copy();
     }
 
-    public static void AppendMembers(StringBuilder res, Dictionary<string, (string, System.Type)> dic,Dictionary<string, (string, System.Type, int)> arrDic)
+    public static void AppendMembers(StringBuilder res,GenCodeCxt cxt)
     {
-        foreach (var it in dic)
+        foreach (var it in cxt.dic)
         {
             res.AppendLine(string.Format("public {0} {1};", it.Value.Item2.FullName, it.Key));
         }
-        foreach (var it in arrDic)
+        foreach (var it in cxt.arrDic)
+        {
+            res.AppendLine(string.Format("public {0}[] {1};", it.Value.Item2.FullName, it.Key));
+        }
+        foreach (var it in cxt.arrExDic)
         {
             res.AppendLine(string.Format("public {0}[] {1};", it.Value.Item2.FullName, it.Key));
         }
     }
 
-    public static void AppendFindMembers(StringBuilder res, Dictionary<string, (string, System.Type)> dic, Dictionary<string, (string, System.Type, int)> arrDic,
+    public static void AppendFindMembers(StringBuilder res, GenCodeCxt cxt,
         string self = "this")
     {
-        foreach (var it in dic)
+        foreach (var it in cxt.dic)
         {
             res.AppendLine(string.Format("{3}.{0} = root.Find(\"{1}\").GetComponent<{2}>();", it.Key, it.Value.Item1, it.Value.Item2.FullName,self));
         }
-        foreach (var it in arrDic)
+        foreach (var it in cxt.arrDic)
         {
             res.AppendLine(string.Format("{3}.{0} = new {1}[{2}];", it.Key, it.Value.Item2.FullName, it.Value.Item3,self));
             for (int i = 0; i < it.Value.Item3; ++i)
@@ -123,10 +161,19 @@ public class {0}SubViewMgr : SubViewMgr<{0}SubViewUI>
                     it.Key, it.Value.Item2.FullName, i, it.Value.Item1,self));
             }
         }
+        foreach (var it in cxt.arrExDic)
+        {
+            res.AppendLine(string.Format("{3}.{0} = new {1}[{2}];", it.Key, it.Value.Item2.FullName, it.Value.Item1.Count, self));
+            for (int i = 0; i < it.Value.Item1.Count; ++i)
+            {
+                res.AppendLine(string.Format("{4}.{0}[{2}] = root.Find(\"{3}\").GetComponent<{1}>();",
+                    it.Key, it.Value.Item2.FullName, i, it.Value.Item1[i], self));
+            }
+        }
     }
 
-    private static void FindAutoItemChildlern(GameObject gameObj, ref Dictionary<string, (string, System.Type)> dic,
-        ref Dictionary<string, (string, System.Type, int)> arrDic, string parentName = "", bool isRoot = true, string HEAD = "IT_", string HEAD_ARR = "ITA_",
+
+    private static void FindAutoItemChildlern(GameObject gameObj, ref GenCodeCxt cxt, string parentName = "", bool isRoot = true,
         System.Func<GameObject, System.Type> findGameObjectTy = null)
     {
         if (findGameObjectTy == null) findGameObjectTy = FindGameObjTypeDef;
@@ -140,24 +187,33 @@ public class {0}SubViewMgr : SubViewMgr<{0}SubViewUI>
         for (int i = 0; i < gameObj.transform.childCount; ++i)
         {
             var it = gameObj.transform.GetChild(i);
-            if (it.name.StartsWith(HEAD))
+            if (it.name.StartsWith(cxt.HEAD))
             {
-                var n = it.name.Substring(HEAD.Length);
-                dic.Add(n, (name + it.name, findGameObjectTy(it.gameObject)));
+                var n = it.name.Substring(cxt.HEAD.Length);
+                cxt.dic.Add(n, (name + it.name, findGameObjectTy(it.gameObject)));
             }
-            else if(it.name.StartsWith(HEAD_ARR) && it.childCount > 0)
+            else if(it.name.StartsWith(cxt.HEAD_ARR) && it.childCount > 0)
             {
-                var n = it.name.Substring(HEAD_ARR.Length);
-                arrDic.Add(n, (name + it.name, findGameObjectTy(it.GetChild(0).gameObject),it.childCount));
+                var n = it.name.Substring(cxt.HEAD_ARR.Length);
+                cxt.arrDic.Add(n, (name + it.name, findGameObjectTy(it.GetChild(0).gameObject),it.childCount));
+                continue;
+            }else if(cxt.ParseArrEx(it.name,out string arrExName,out int arrExIdx))
+            {
+                if (!cxt.arrExDic.ContainsKey(arrExName))
+                    cxt.arrExDic.Add(arrExName, (new List<string>(), findGameObjectTy(it.gameObject)));
+                while (cxt.arrExDic[arrExName].Item1.Count <= arrExIdx)
+                    cxt.arrExDic[arrExName].Item1.Add(null);
+                cxt.arrExDic[arrExName].Item1[arrExIdx] = name + it.name;
                 continue;
             }
-            FindAutoItemChildlern(it.gameObject, ref dic,ref arrDic,name,false,HEAD,HEAD_ARR);
+            FindAutoItemChildlern(it.gameObject, ref cxt,name,false,findGameObjectTy);
         }
     }
 
     private static System.Type FindGameObjTypeDef(GameObject gameObject)
     {
-        System.Type[] arr = new System.Type[] { typeof(Text),typeof(Button), typeof(Image),typeof(RawImage), typeof(Slider) };
+        System.Type[] arr = new System.Type[] { typeof(Text),typeof(Button), typeof(Image),typeof(RawImage), 
+            typeof(Slider),typeof(DynamicLoopScroll.LoopScrollRect),typeof(DataCarrier),typeof(Animator) };
         foreach(var t in arr)
         {
             if(gameObject.GetComponent(t) != null)
@@ -170,7 +226,7 @@ public class {0}SubViewMgr : SubViewMgr<{0}SubViewUI>
 
     private static System.Type FindGameObjTypeSceneView(GameObject gameObject)
     {
-        System.Type[] arr = new System.Type[] { typeof(BoxCollider), typeof(Camera)};
+        System.Type[] arr = new System.Type[] { typeof(BoxCollider),typeof(Collider), typeof(CatAniUtil), typeof(BehaviorDesigner.Runtime.BehaviorTree), typeof(Camera),typeof(SceneConfig) };
         foreach (var t in arr)
         {
             if (gameObject.GetComponent(t) != null)
@@ -183,9 +239,8 @@ public class {0}SubViewMgr : SubViewMgr<{0}SubViewUI>
 
     public static void GenerateSceneViewBindReal(StringBuilder res, GameObject o)
     {
-        Dictionary<string, (string, System.Type)> dic = new Dictionary<string, (string, System.Type)>();
-        Dictionary<string, (string, System.Type, int)> arrDic = new Dictionary<string, (string, System.Type, int)>();
-        FindAutoItemChildlern(o as GameObject, ref dic, ref arrDic, "", true, "SCV_", "SCVA_",FindGameObjTypeSceneView);
+        GenCodeCxt cxt = new GenCodeCxt("SCV");
+        FindAutoItemChildlern(o as GameObject, ref cxt, "", true,FindGameObjTypeSceneView);
 
         string name = o.name;
 
@@ -193,7 +248,7 @@ public class {0}SubViewMgr : SubViewMgr<{0}SubViewUI>
 public class {0}SceneViewUI : SubViewUI
 {{
 ", name));
-        AppendMembers(res, dic, arrDic);
+        AppendMembers(res, cxt);
         res.Append(string.Format(@"
 public {0}SceneViewUI()
 {{
@@ -203,7 +258,7 @@ public override void init(Transform root)
 {{
     base.init(root);
 ", name));
-        AppendFindMembers(res, dic, arrDic);
+        AppendFindMembers(res, cxt);
         res.Append(@"}
 }");
     }

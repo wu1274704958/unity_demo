@@ -268,6 +268,66 @@ namespace Assets.Editor
                     dic[dic.Count + 1] = s;
                 }
             }
+            TableShower.ShowSvnFile(dic);
+            EditorUtility.ClearProgressBar();
+        }
+
+        [MenuItem("Assets/RevertAbChangedMetaFile")]
+        public static void RevertAbChangedMetaFile()
+        {
+            var obj = Selection.assetGUIDs;
+            if (obj == null || obj.Length == 0) return;
+            var dir = AssetDatabase.GUIDToAssetPath(obj[0]);
+            if (!Directory.Exists(dir)) return;
+            if (EditorUtility.DisplayCancelableProgressBar("执行中...", "", 0.0f))
+            {
+                EditorUtility.ClearProgressBar();
+                return;
+            }
+            var p = ExecCmd("svn", "status", dir);
+            List<SvnFile> modify = new List<SvnFile>();
+            while (!p.StandardOutput.EndOfStream)
+            {
+                var line = p.StandardOutput.ReadLine();
+                if (line.StartsWith("M ") && line.EndsWith(".meta"))
+                {
+                    var file = line.Remove(0, 1).TrimStart();
+                    if (EditorUtility.DisplayCancelableProgressBar("执行中...", file, 0.0f))
+                    {
+                        EditorUtility.ClearProgressBar();
+                        return;
+                    }
+
+                    var svn = new SvnFile();
+                    svn.FullPath = Path.Combine(dir, file);
+                    svn.Status = line.Substring(0, 1);
+                    modify.Add(svn);
+                }
+            }
+
+            if (EditorUtility.DisplayCancelableProgressBar("执行中...", "", 0.5f))
+            {
+                EditorUtility.ClearProgressBar();
+                return;
+            }
+            p.Close();
+            var index = 0;
+            var total = modify.Count;
+            foreach (var s in modify)
+            {
+                ++index;
+                var per = 0.5f + (index * 0.5f / total);
+                var news = s.FullPath;
+                if (EditorUtility.DisplayCancelableProgressBar("执行中...", news, per))
+                {
+                    EditorUtility.ClearProgressBar();
+                    return;
+                }
+
+                if (s.Status == "M" && isOnlyModifyAssetsBundleName(s.FullPath))
+                    RevertFile(s.FullPath);
+            }
+            //TableShower.ShowSvnFile(dic);
             EditorUtility.ClearProgressBar();
         }
 
@@ -324,6 +384,24 @@ namespace Assets.Editor
             return p;
         }
 
+        public static string ExecCmdSample(string cmd, string args, string dir = "")
+        {
+            var p = ExecCmd(cmd, args,dir);
+            StringBuilder sb = new StringBuilder();
+            while (!p.StandardOutput.EndOfStream)
+            {
+                sb.Append(p.StandardOutput.ReadLine());
+            }
+            p.Close();
+            return sb.ToString();
+        }
+
+        public static bool RevertFile(string path,string depth = "infinity")
+        {
+            var p = ExecCmdSample("svn", string.Format("revert --depth={0} " + path,depth));
+            return p != null && p.StartsWith("Reverted");
+        }
+
         public static Type getTypeByPath(string s)
         {
             if (s.EndsWith(".png"))
@@ -357,12 +435,12 @@ namespace Assets.Editor
                 string filename = Path.GetFileNameWithoutExtension(fullpath);
                 if (File.Exists(fullpath) && o is GameObject gameObj)
                 {
-                    //if (changeComp<UIAdaptor, yoyohan.getnotchsize.NotchSizeMono>(gameObj, (c) =>
-                    // {
-                    //     c.isLandscape = true;
-                    // }))
-                    //{
-                    //}
+                    if (changeComp<UIAdaptor, yoyohan.getnotchsize.NotchSizeMono>(gameObj, (c) =>
+                     {
+                         c.isLandscape = true;
+                     }))
+                    {
+                    }
                 }
                 return filename;
             });

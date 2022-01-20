@@ -10,6 +10,7 @@ public class DataCarrierEditor : Editor
     private string CurrK = "";
     private string CurrV = "";
     int did = 0;
+    private List<string> temp = new List<string>();
     private void OnEnable()
     {
 
@@ -24,6 +25,20 @@ public class DataCarrierEditor : Editor
         {
             var (k, v) = tar.Get(i);
             GUILayout.Label(string.Format( "{2} : {0} => {1}",k,v,i));
+
+            if (i >= temp.Count)
+                temp.Add(v);
+
+            temp[i] = GUILayout.TextField(temp[i]);
+            if (temp[i].Length > 0 && temp[i] != v)
+            {
+                if(GUILayout.Button("修改"))
+                {
+                    if(!tar.SetVal(k, temp[i]))
+                        temp[i] = v;
+                }
+            }
+                
         }
 
         EditorGUILayout.Space();
@@ -43,6 +58,10 @@ public class DataCarrierEditor : Editor
         if (tar.good_idx(did) && GUILayout.Button("删除"))
         {
             tar.Remove(did);
+        }
+        if(GUILayout.Button("清除缓存"))
+        {
+            tar.ClearCache();
         }
         if (EditorGUI.EndChangeCheck())
         {

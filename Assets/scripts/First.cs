@@ -48,4 +48,12 @@ public class First : MonoBehaviour
     {
         
     }
+
+
+}
+
+class Test
+{
+    public string name;
+    public int n = 0;
 }

@@ -6,3 +6,8 @@ public class GuideGoConfigID : MonoBehaviour
 {
     public uint ID;
 }
+
+public interface GuideGoInterfaceID
+{
+    uint GetId();
+}

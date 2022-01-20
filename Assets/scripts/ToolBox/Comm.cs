@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading.Tasks;
 using UnityEngine;
 
 public class Wrap<T>
@@ -72,7 +73,25 @@ public static class TransformExt
         }
         return null;
     }
+
+    public static void DestroyAllChildren(this Transform root)
+    {
+        while(root.childCount > 0)
+        {
+            UnityEngine.Object.DestroyImmediate(root.GetChild(0).gameObject);
+        }
+    }
+
+    public static void cloneAdd(this Transform root,GameObject prefab,bool active = true,bool defScale = true,bool defRotate = true,bool defPos = true)
+    {
+        var obj = GameObject.Instantiate(prefab,root);
+        obj.SetActive(active);
+        if (defPos) obj.transform.localPosition = Vector3.zero;
+        if (defScale) obj.transform.localScale = Vector3.one;
+        if (defRotate) obj.transform.localRotation = Quaternion.identity;
+    }
 }
+
 
 public interface GetVal<T>
 {
@@ -551,7 +570,8 @@ public class ColliderClick
 {
     protected int layerMask;
     protected float VaildDist = 100.0f;
-    protected float sqrMouseMoveVaildDist = 2.0f;
+    protected float sqrMouseMoveVaildDist = 4.0f;
+    protected bool ignoreUI = false;
     protected Vector2 downPos;
     protected HashSet<Collider> colliders = new HashSet<Collider>();
     public Action<Collider> OnClick;
@@ -562,11 +582,12 @@ public class ColliderClick
         } 
     }
 
-    public ColliderClick(int layerMask, float VaildDist = 100.0f,Camera cam = null)
+    public ColliderClick(int layerMask, float VaildDist = 100.0f,Camera cam = null, bool ignoreUI = false)
     {
         this.layerMask = layerMask;
         this.VaildDist = VaildDist;
         this.cam = cam;
+        this.ignoreUI = ignoreUI;
     }
 
     public bool Add(Collider c)
@@ -581,10 +602,10 @@ public class ColliderClick
         colliders.Remove(c);
         return;
     }
-    protected void Clicked(Vector3 pos)
+    protected bool Clicked(Vector3 pos)
     {
-        //if (cam == null) cam = CameraMgr.Instance.GetCamera(ECamType.MainCam);
-        if (cam == null) return;
+        if (cam == null) cam = CameraMgr.Instance.GetCamera(ECamType.MainCam);
+        if (cam == null) return false;
         var ray = cam.ScreenPointToRay(pos);
         RaycastHit[] res = Physics.RaycastAll(ray, VaildDist, layerMask);
         float dist = float.MaxValue;
@@ -599,38 +620,91 @@ public class ColliderClick
         }
         if (coll != null)
             OnClick?.Invoke(coll);
+        return coll != null;
     }
-
+    private bool UpPosVaild(Vector2 upPos)
+    {
+        return (upPos - downPos).sqrMagnitude <= sqrMouseMoveVaildDist;
+    }
     public void update()
     {
-#if  !UNITY_EDITOR
-        if (Input.touchCount > 1 || Input.touchCount <= 0) return;
-        
-        var touch = Input.GetTouch(0);
-        if (touch.phase == TouchPhase.Stationary)
+        if (Input.touchSupported)
         {
-            Clicked(touch.position);
+            if (Input.touchCount > 1 || Input.touchCount <= 0) return;
+
+            var touch = Input.GetTouch(0);
+            if (touch.phase == TouchPhase.Began)
+            {
+                if (!ignoreUI && CheckHitUI())
+                    return;
+                downPos = touch.position;
+            }else
+            if(touch.phase == TouchPhase.Ended)
+            {
+                if (!ignoreUI && CheckHitUI())
+                    return;
+                if (!UpPosVaild(touch.position)) return;
+                var pos = GetTouchPos(touch);
+                foreach(var p in pos)
+                {
+                    if (Clicked(new Vector3(p.x, p.y, 0.0f)))
+                        break;
+                }
+            }
         }
-#else
-        if (Input.GetMouseButtonDown(0))
+        else
         {
-            downPos = Input.mousePosition;
-            //Debug.LogWarning(" " + downPos);
+            if (Input.GetMouseButtonDown(0))
+            {
+                if (!ignoreUI && CheckHitUI())
+                    return;
+                downPos = Input.mousePosition;
+            }else
+            if (Input.GetMouseButtonUp(0))
+            {
+                if (!ignoreUI && CheckHitUI())
+                    return;
+                if (!UpPosVaild(Input.mousePosition)) return;
+                Clicked(Input.mousePosition);
+            }
         }
 
-        if (Input.GetMouseButtonUp(0))
-        {
-            Vector2 upPos = Input.mousePosition;
-            //Debug.LogWarning(upPos + " " + downPos +"  " + (upPos - downPos).sqrMagnitude);
-            if ((upPos - downPos).sqrMagnitude > sqrMouseMoveVaildDist) return;
-            Clicked(upPos);
-        }
-#endif
+    }
+
+    private bool CheckHitUI()
+    {
+        var g = UnityEngine.EventSystems.EventSystem.current;
+        return g.currentSelectedGameObject != null;
     }
 
     internal void Clear()
     {
         colliders.Clear();
+    }
+
+    public static Vector2[] GetTouchPos(Touch touch)
+    {
+        var arr = new List<Vector2>();
+        var r = touch.radius - touch.radiusVariance;
+        TmpLog.log("touch.radius = {0} pos = {1}", r,touch.position);
+        arr.Add(touch.position);
+        arr.Add(touch.position + new Vector2(r,0.0f));
+        arr.Add(touch.position + new Vector2(-r, 0.0f));
+        arr.Add(touch.position + new Vector2(0.0f, r));
+        arr.Add(touch.position + new Vector2(0.0f, -r));
+        return arr.ToArray();
+    }
+}
+
+public static class TmpLog
+{
+    public static void log(string fmt, params object[] args)
+    {
+        Debug.LogError(string.Format(fmt, args));
+    }
+    public static void log(string fmt,string tag, params object[] args)
+    {
+        log(string.Format("Msg = {0},Tag = {1}", fmt, tag), args);
     }
 }
 
@@ -661,6 +735,11 @@ public static class Serialize
         if (t == typeof(float))
         {
             if (float.TryParse(s, out var v))
+                return v;
+        }
+        if (t == typeof(bool))
+        {
+            if (bool.TryParse(s, out var v))
                 return v;
         }
         if (t == typeof(double))
@@ -727,10 +806,10 @@ public class AnyArray
 {
     protected List<object> objs;
     protected List<System.Type> tyArr;
-    
+
     public AnyArray(string str)
     {
-        if(parse(str,out var objs,out var tys))
+        if (parse(str, out var objs, out var tys))
         {
             this.objs = objs;
             this.tyArr = tys;
@@ -747,7 +826,7 @@ public class AnyArray
     }
     public bool TypeEq<T>(int idx)
     {
-        if(good_idx(idx))
+        if (good_idx(idx))
         {
             return typeof(T) == tyArr[idx];
         }
@@ -763,7 +842,7 @@ public class AnyArray
         return default(T);
     }
 
-    public bool TryGet<T>(int idx,out T v)
+    public bool TryGet<T>(int idx, out T v)
     {
         v = default(T);
         if (TypeEq<T>(idx))
@@ -779,28 +858,28 @@ public class AnyArray
         return objs.ToArray();
     }
 
-    public bool parse(string str,out List<object> objs,out List<System.Type> tys)
+    public bool parse(string str, out List<object> objs, out List<System.Type> tys)
     {
         var cs = str.Trim().ToCharArray();
         int step = 0;
         System.Type currTy = null;
         objs = new List<object>();
         tys = new List<Type>();
-        for(int i = 0;i < cs.Length;++i)
+        for (int i = 0; i < cs.Length; ++i)
         {
             var it = cs[i];
             if (step == 0 && it == '[')
             {
-                ++step;continue;
+                ++step; continue;
             }
-            if(step == 1 && it == ']')
+            if (step == 1 && it == ']')
             {
                 if (i + 1 == cs.Length)
                 {
-                    step = 100;break;
+                    step = 100; break;
                 }
             }
-            if(step == 1)
+            if (step == 1)
             {
                 if (GetType(cs, i, out var ty, out var new_it))
                 {
@@ -829,9 +908,9 @@ public class AnyArray
         return step == 100;
     }
 
-    private bool GetType(char[] arr,int it,out System.Type ty,out int new_it)
+    private bool GetType(char[] arr, int it, out System.Type ty, out int new_it)
     {
-        ty = null;new_it = it;
+        ty = null; new_it = it;
         var step = 0;
         StringBuilder sb = new StringBuilder();
         for (int i = it; i < arr.Length; ++i)
@@ -846,7 +925,7 @@ public class AnyArray
                 }
                 continue;
             }
-            if(step == 1)
+            if (step == 1)
             {
                 if (c != ':')
                     sb.Append(c);
@@ -862,7 +941,7 @@ public class AnyArray
         return step == 2 && ty != null;
     }
 
-    private bool GetVal(char[] arr, int it,System.Type ty, out object val, out int new_it)
+    private bool GetVal(char[] arr, int it, System.Type ty, out object val, out int new_it)
     {
         val = null; new_it = it;
         var step = 0;
@@ -887,7 +966,7 @@ public class AnyArray
                 {
                     step += 1;
                     new_it = i;
-                    val = Serialize.Deserialize(sb.ToString().TrimEnd(),ty );
+                    val = Serialize.Deserialize(sb.ToString().TrimEnd(), ty);
                     break;
                 }
             }
@@ -897,7 +976,7 @@ public class AnyArray
 
     private System.Type GetTypeByTag(string res)
     {
-        if(AnyArrayTyMap.TypeMap.TryGetValue(res,out var s))
+        if (AnyArrayTyMap.TypeMap.TryGetValue(res, out var s))
         {
             return s;
         }

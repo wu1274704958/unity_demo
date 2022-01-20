@@ -10,6 +10,7 @@ public class GuideGoConfigEditor : Editor
     string name_ = null;
     int id = 0;
     int did = 0;
+    List<Transform> FoundTs = new List<Transform>();
 
     private void OnEnable()
     {
@@ -25,10 +26,19 @@ public class GuideGoConfigEditor : Editor
         {
             GUILayout.Label(tar.Id[i].ToString());
             GUILayout.Label(tar.Childlren[i]);
-            Transform t = null;
-            if ((t = tar.FindEx(tar.Childlren[i])) != null)
+            Transform t = i < FoundTs.Count ? FoundTs[i] : null;
+            if (t == null && (t = tar.FindExLoop(tar.Childlren[i])) != null)
             {
-                EditorGUILayout.ObjectField(t, typeof(Transform),true);
+                if (i < FoundTs.Count)
+                    FoundTs[i] = t;
+                else
+                    FoundTs.Add(t);
+            }
+            if (i >= FoundTs.Count) continue;
+            EditorGUILayout.ObjectField(FoundTs[i], typeof(Transform), true);
+            if (t != null && GUILayout.Button("Clear Found"))
+            {
+                FoundTs[i] = null;
             }
         }
 

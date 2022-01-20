@@ -2,7 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using static Utils;
+
 
 public enum GStateEnum
 {
@@ -43,7 +43,12 @@ public abstract class GStateHandler
     {
         return null;
     }
-    protected virtual void AddPrarm<T>(string str,T v = null)
+
+    public void SetNext(GStateEnum e,GStateHandler n)
+    {
+        nextState = new GState(e,n);
+    }
+    public virtual void AddPrarm<T>(string str,T v = null)
         where T:class
     {
         if (m_param == null) m_param = new Dictionary<string, (Type, object)>();
@@ -52,7 +57,7 @@ public abstract class GStateHandler
             m_param[str] = (typeof(T), v);
         }
     }
-    protected virtual void AddPrarmX<T>(string str)
+    public virtual void AddPrarmX<T>(string str)
         where T : struct
     {
         if (m_param == null) m_param = new Dictionary<string, (Type, object)>();
@@ -61,7 +66,7 @@ public abstract class GStateHandler
             m_param[str] = (typeof(Wrap<T>), null);
         }
     }
-    protected virtual void AddPrarmDef<T>(string str)
+    public virtual void AddPrarmDef<T>(string str)
         where T : struct
     {
         if (m_param == null) m_param = new Dictionary<string, (Type, object)>();
@@ -70,7 +75,7 @@ public abstract class GStateHandler
             m_param[str] = (typeof(Wrap<T>), new Wrap<T>(default(T)));
         }
     }
-    protected virtual void AddPrarmX<T>(string str,T x)
+    public virtual void AddPrarmX<T>(string str,T x)
         where T : struct
     {
         if (m_param == null) m_param = new Dictionary<string, (Type, object)>();
