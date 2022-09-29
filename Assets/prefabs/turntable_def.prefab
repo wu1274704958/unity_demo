@@ -1,0 +1,181 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &8472700898644873430
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 6281826759507348110}
+  - component: {fileID: 959985291161267385}
+  - component: {fileID: 3372685595365764948}
+  - component: {fileID: 3372685595365764951}
+  m_Layer: 5
+  m_Name: turntable_def
+  m_TagString: UIProperty
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &6281826759507348110
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8472700898644873430}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_RootOrder: 0
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0.5, y: 0.5}
+  m_AnchorMax: {x: 0.5, y: 0.5}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 1080, y: 1080}
+  m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &959985291161267385
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8472700898644873430}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c41e9dc7e2f28934c9e7c92a9b386be8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _ArrangeData:
+    SizeArr:
+    - {x: 155, y: 120.35901}
+    - {x: 270, y: 136}
+    - {x: 385, y: 152}
+    - {x: 500, y: 167}
+    - {x: 615, y: 181.9873}
+    SpaceArr:
+    - 94.820496
+    - 202.11697
+    - 309.41342
+    - 416.7099
+    - 524.00635
+    Angle: 60
+    NumOfRow: 3
+    StartAngle: 0
+    FragmentPointNum: 30
+    ImagePrefix: img_turntable
+  MotionConf:
+    DetermineDirMinDistanceForRotate: 0.05
+    DetermineDirMinDistanceForTranslate: 5
+    TranslateAdsorptionVelocity: 0.01
+    TranslateVelocity: 0.01
+    TranslateManualFactor: 0.01
+    TranslateAdsorptionFactor: 6
+    TranslateAdsorptionMinVelocity: 0
+    RotateAdsorptionVelocity: 0.01
+    RotateVelocity: 0.01
+    RotateManualFactor: 0.01
+    RotateAdsorptionFactor: 6
+    RotateAdsorptionMinVelocity: 0
+    MinAdsorptionRange: 0.3
+    LineWeight: 50
+    LineWeightAngle: 1
+    TranslateAutoVelocity: 0.03
+    RotateAutoVelocity: 0.03
+  Rows:
+  - Angle: 0
+    Direction: {x: 0, y: 0}
+    Fragments:
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    Id: 0
+  - Angle: 0
+    Direction: {x: 0, y: 0}
+    Fragments:
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    Id: 0
+  - Angle: 0
+    Direction: {x: 0, y: 0}
+    Fragments:
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    Id: 0
+  m_State: 0
+  LastPos: {x: 0, y: 0}
+  SelRealId: {x: -2147483648, y: -2147483648}
+  SelectFragment: {fileID: 0}
+  InMotion: []
+  Direction: 0
+  OperatingDat:
+    DirRes: 0
+    Type: 0
+    Rid: 0
+    Begin: []
+  CanPlay: 1
+--- !u!223 &3372685595365764948
+Canvas:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8472700898644873430}
+  m_Enabled: 1
+  serializedVersion: 3
+  m_RenderMode: 2
+  m_Camera: {fileID: 0}
+  m_PlaneDistance: 100
+  m_PixelPerfect: 0
+  m_ReceivesEvents: 1
+  m_OverrideSorting: 0
+  m_OverridePixelPerfect: 0
+  m_SortingBucketNormalizedSize: 0
+  m_AdditionalShaderChannelsFlag: 1
+  m_SortingLayerID: 0
+  m_SortingOrder: 0
+  m_TargetDisplay: 0
+--- !u!114 &3372685595365764951
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8472700898644873430}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dc42784cf147c0c48a680349fa168899, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_IgnoreReversedGraphics: 1
+  m_BlockingObjects: 0
+  m_BlockingMask:
+    serializedVersion: 2
+    m_Bits: 4294967295

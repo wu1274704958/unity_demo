@@ -3,6 +3,8 @@
 Logs/**
 obj/**
 Temp/**
+.idea/**
+*.apk
 
 [Ll]ibrary/
 [Tt]emp/ 
